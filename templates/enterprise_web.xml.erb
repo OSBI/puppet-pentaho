@@ -22,10 +22,10 @@
 
 	<!--  FullyQualifiedServerUrl is used only in the case of offline content generation and whenever something need to talk back to the server -->
 	<context-param>
-		<param-name>fully-qualified-server-url</param-name>
+		<param-name>fully-qualified-server-url</param-name> 
 		<param-value>https://<%= vhost %>/pentaho/</param-value>
 	</context-param>
-	
+
 	<context-param>
 		<param-name>locale-language</param-name>
 		<!-- for example 'fr' for French, 'de' for German, da for danish -->
@@ -42,16 +42,16 @@
 		<param-value>org.pentaho.platform.web.http.context.PentahoSolutionSpringApplicationContext</param-value>
 	</context-param>
 
-	<context-param>
-      <param-name>contextConfigLocation</param-name>
-      <!-- This file is relative to the "system" folder within your pentaho solutions folder. -->
-      <!-- Instead of adding files here, add them as imports to pentaho-spring-beans.xml. -->
-      <param-value>pentaho-spring-beans.xml</param-value>
-	</context-param>
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <!-- This file is relative to the "system" folder within your pentaho solutions folder. -->
+    <!-- Instead of adding files here, add them as imports to pentaho-spring-beans.xml. -->
+    <param-value>pentaho-spring-beans.xml</param-value>
+  </context-param>
 
 	<context-param>
 		<param-name>pentahoObjectFactory</param-name>
-		<param-value>org.pentaho.platform.web.http.context.WebSpringPentahoObjectFactory</param-value>
+		<param-value>com.pentaho.platform.web.http.context.WebSpringPentahoObjectFactory</param-value>
 	</context-param>
 
 	<!--
@@ -64,7 +64,7 @@
 		<param-name>pentahoObjectFactoryCfgFile</param-name>
 		<param-value>pentahoObjects.spring.xml</param-value>
 	</context-param>
-  
+
 	<!--
 		This defaults to UTF-8. Uncomment this section and change the value for other encodings. Also change the URIEncoding
 		in Tomcat's server.xml.
@@ -85,11 +85,15 @@
 	</context-param>
 
     <!-- [BEGIN HSQLDB DATABASES] -->
-    <!--<context-param>
+    <context-param>
         <param-name>hsqldb-databases</param-name>
-        <param-value>sampledata@../../data/hsqldb/sampledata,hibernate@../../data/hsqldb/hibernate,quartz@../../data/hsqldb/quartz</param-value>
-    </context-param>-->
-    <!-- [END HSQLDB DATABASES] -->
+        <param-value>sampledata@/Applications/pentaho/server/hsql-sample-database/hsqldb/sampledata</param-value>
+    </context-param>
+    <context-param>
+										<param-name>hsqldb-port</param-name>
+										<param-value>9001</param-value>
+									</context-param>
+							<!-- [END HSQLDB DATABASES] -->
     
 	<!-- insert additional context-params -->
 
@@ -101,16 +105,15 @@
 			<param-value>yes</param-value>
 		</init-param>
 	</filter>
-	
+
 	<!-- Pentaho Request Context Filter is use to extract the Context Path from Servlet Request and store it in the PentahoRequestContextHolder.
 	This is needed to get the relative path to the server for online content generation and requesting of resources.
 	 -->
-	
 	<filter>
 		<filter-name>Pentaho Request Context Filter</filter-name>
 		<filter-class>org.pentaho.platform.web.http.filters.PentahoRequestContextFilter</filter-class>
 	</filter>
-
+	
 	<filter>
 		<filter-name>Spring Security Filter Chain Proxy</filter-name>
 		<filter-class>org.springframework.security.util.FilterToBeanProxy</filter-class>
@@ -122,7 +125,7 @@
 
 	<filter>
 		<filter-name>SystemStatusFilter</filter-name>
-		<filter-class>org.pentaho.platform.web.http.filters.SystemStatusFilter</filter-class>
+		<filter-class>com.pentaho.ui.servlet.SystemStatusFilter</filter-class>
 		<init-param>
 			<param-name>initFailurePage</param-name>
 			<param-value>InitFailure</param-value>
@@ -135,20 +138,19 @@
 		<filter-class>org.pentaho.platform.web.http.filters.ProxyTrustingFilter</filter-class>
 		<init-param>
 			<param-name>TrustedIpAddrs</param-name>
-			<param-value>127.0.0.1,0\:0\:0\:0\:0\:0\:0\:1(%.+)*$,<%= ec2_public_ipv4 %></param-value>
+			<param-value>127.0.0.1,0\:0\:0\:0\:0\:0\:0\:1(%.+)*$</param-value>
 			<description>Comma separated list of IP addresses of a trusted hosts.</description>
 		</init-param>
 	</filter>
-	
-	<!--  Pentaho Web Context Filter checks to see if webcontext.js is being requested. It writes the content of webcontext.js 
+    
+    <!--  Pentaho Web Context Filter checks to see if webcontext.js is being requested. It writes the content of webcontext.js 
 	      webcontext.js contains value for CONTEXT_PATH and FULLY_QUALIFIED_SERVER_URL
-	  -->
+	 -->
 	<filter>
 		<filter-name>Pentaho Web Context Filter</filter-name>
 		<filter-class>org.pentaho.platform.web.http.filters.PentahoWebContextFilter</filter-class>
 	</filter>
-
-	<!-- insert additional filters -->
+<!-- insert additional filters -->
 
 	<filter-mapping>
 		<filter-name>Set Character Encoding Filter</filter-name>
@@ -160,6 +162,11 @@
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
 
+	<filter-mapping>
+		<filter-name>Proxy Trusting Filter</filter-name>
+		<url-pattern>/admin/*</url-pattern>
+	</filter-mapping>	
+	
 	<filter-mapping>
 		<filter-name>Proxy Trusting Filter</filter-name>
 		<url-pattern>/SchedulerAdminService</url-pattern>
@@ -189,6 +196,12 @@
 		<filter-name>Proxy Trusting Filter</filter-name>
 		<url-pattern>/SolutionRepositoryService</url-pattern>
 	</filter-mapping>
+
+  <filter-mapping>
+    <filter-name>Proxy Trusting Filter</filter-name>
+    <url-pattern>/content/geoprint</url-pattern>
+  </filter-mapping>
+
 	<!-- Filter mapping for security. Note that all objects are locked down. We could change this here as desired. -->
 	<filter-mapping>
 		<filter-name>Spring Security Filter Chain Proxy</filter-name>
@@ -200,19 +213,23 @@
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
 	
-	<filter-mapping>
+    <filter-mapping>
 		<filter-name>Pentaho Web Context Filter</filter-name>
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>	
 	<!-- insert additional filter-mappings -->
-
+  
     <!--   enables session and request scoped object creation in Spring -->
     <listener>
         <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
     </listener>
 
-
-     
+    <!-- [BEGIN HSQLDB STARTER] -->
+    <listener>
+        <listener-class>org.pentaho.platform.web.http.context.HsqldbStartupListener</listener-class>
+    </listener>
+    <!-- [END HSQLDB STARTER] -->
+    
 	<!-- JPivot resources initializer -->
 	<listener>
 		<listener-class>com.tonbeller.tbutils.res.ResourcesFactoryContextListener</listener-class>
@@ -221,10 +238,10 @@
 	<listener>
 		<listener-class>org.pentaho.platform.web.http.session.PentahoHttpSessionListener</listener-class>
 	</listener>
-  
-	<listener>
-		<listener-class>org.pentaho.platform.web.http.request.PentahoHttpRequestListener</listener-class>
-	</listener>
+    
+    <listener>
+        <listener-class>org.pentaho.platform.web.http.request.PentahoHttpRequestListener</listener-class>
+    </listener>
 
 	<!-- NEXT TWO LISTENERS ARE ORDER DEPENDENT -->
 	<listener>
@@ -247,6 +264,11 @@
 	<listener>
 		<listener-class>org.pentaho.platform.web.http.session.PentahoCacheSessionListener</listener-class>
 	</listener>
+    
+    <listener>
+       <listener-class>com.pentaho.core.system.UserCountListener</listener-class>
+    </listener>
+    
 	<!-- insert additional listeners -->
 
 
@@ -309,6 +331,11 @@
 	</servlet>
 
 	<servlet>
+    <servlet-name>ThemeServlet</servlet-name>
+    <servlet-class>org.pentaho.platform.web.servlet.ThemeServlet</servlet-class>
+  </servlet>
+
+	<servlet>
 		<servlet-name>Xmla</servlet-name>
 		<servlet-class>org.pentaho.platform.web.servlet.PentahoXmlaServlet</servlet-class>
 		<init-param>
@@ -332,20 +359,23 @@
 	</servlet>
 
 	<servlet>
-    	<servlet-name>GenericServlet</servlet-name>
+		<servlet-name>GenericServlet</servlet-name>
 		<servlet-class>org.pentaho.platform.web.servlet.GenericServlet</servlet-class>
 	</servlet>
-
-	<servlet>
-    	<servlet-name>GwtRpcPluginProxyServlet</servlet-name>
-		<servlet-class>org.pentaho.platform.web.servlet.GwtRpcPluginProxyServlet</servlet-class>
-	</servlet>
   
+    <servlet>
+      <servlet-name>GwtRpcPluginProxyServlet</servlet-name>
+      <servlet-class>org.pentaho.platform.web.servlet.GwtRpcPluginProxyServlet</servlet-class>
+    </servlet>
+
     <servlet>
       <servlet-name>PluggableUploadFileServlet</servlet-name>
       <servlet-class>org.pentaho.platform.web.servlet.PluggableUploadFileServlet</servlet-class>
     </servlet>
-
+    <servlet>
+      <servlet-name>RequireJSServlet</servlet-name>
+      <servlet-class>org.pentaho.platform.web.servlet.RequireJSServlet</servlet-class>
+    </servlet>
 
   <servlet>
     <servlet-name>LocalizationServlet</servlet-name>
@@ -433,18 +463,18 @@
 		<jsp-file>/jsp/UserContent.jsp</jsp-file>
 	</servlet>
   
-  	<!--   Temporary fix for GWT localization BISERVER-3640 -->
+    <!--   Temporary fix for GWT localization BISERVER-3640 -->
     <servlet>
       <servlet-name>BrowserLocale</servlet-name>
       <jsp-file>/jsp/browserLocale.jsp</jsp-file>
     </servlet>
-  	<!--   End BISERVER-3640 -->
+    <!--   End BISERVER-3640 -->
 
 	<!-- ================================= merged servlets =================================== -->
-	<servlet>
-		<servlet-name>CacheExpirationService</servlet-name>
-		<servlet-class>org.pentaho.platform.web.servlet.CacheExpirationService</servlet-class>
-	</servlet>
+  <servlet>
+    <servlet-name>CacheExpirationService</servlet-name>
+    <servlet-class>org.pentaho.platform.web.servlet.CacheExpirationService</servlet-class>
+  </servlet>
 
 	<servlet>
 		<servlet-name>AdhocWebService</servlet-name>
@@ -486,9 +516,14 @@
 		<jsp-file>/jsp/PUCLogin.jsp</jsp-file>
 		<init-param>
 			<param-name>send401List</param-name>
-			<param-value>AdhocWebService,AnalysisViewService,MondrianCatalogPublisher, SchedulerAdminService, SubscriptionAdminService, PublishService, ResetRepositoryService, ServiceActionService,SolutionRepositoryService,gwtrpc,mantle/images/spacer.gif</param-value>
+			<param-value>AdhocWebService,AnalysisViewService,MondrianCatalogPublisher, SchedulerAdminService, SubscriptionAdminService, PublishService, ResetRepositoryService, ServiceActionService,SolutionRepositoryService,gwtrpc,mantle/images/spacer.gif</param-value>			
 			<description>List of things to throw a 401 to when seen in the login</description>
 		</init-param>
+	</servlet>
+
+	<servlet>
+		<servlet-name>DialPct</servlet-name>
+		<jsp-file>/chart/DialPct.jsp</jsp-file>
 	</servlet>
 
 	<servlet>
@@ -510,6 +545,31 @@
 		<servlet-name>MantleLoginService</servlet-name>
 		<servlet-class>org.pentaho.mantle.login.server.MantleLoginServlet</servlet-class>
 	</servlet>
+
+    <servlet>
+        <servlet-name>AuditReport</servlet-name>
+        <servlet-class>com.pentaho.ui.servlet.AuditReport</servlet-class>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>AuditReportList</servlet-name>
+        <servlet-class>com.pentaho.ui.servlet.AuditReportList</servlet-class>
+    </servlet>
+   
+    <servlet>
+        <servlet-name>VersionControl</servlet-name>
+        <servlet-class>com.pentaho.ui.servlet.LoadDBRepositoryFromVersionControl</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>UserService</servlet-name>
+        <servlet-class>com.pentaho.ui.servlet.UserService</servlet-class>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>Diagnostics</servlet-name>
+        <servlet-class>com.pentaho.ui.servlet.Diagnostics</servlet-class>
+    </servlet>
 
   	<servlet>
 		<servlet-name>UploadService</servlet-name>
@@ -553,13 +613,11 @@
 	</servlet>	
 	
 	<servlet>
-		<servlet-name>ThemeServlet</servlet-name>
-		<servlet-class>org.pentaho.platform.web.servlet.ThemeServlet</servlet-class>
-	</servlet>
-
-
-
-	<!-- [END SAMPLE SERVLETS] -->
+		<servlet-name>SampleFlashDashboard</servlet-name>
+		<jsp-file>/jsp/SampleFlashDashboard.jsp</jsp-file>
+	</servlet>	
+  
+  <!-- [END SAMPLE SERVLETS] -->
 
   <!-- insert additional servlets -->
 
@@ -610,14 +668,20 @@
 		<url-pattern>/content/*</url-pattern>
 	</servlet-mapping>
   
-	<servlet-mapping>
-		<servlet-name>GwtRpcPluginProxyServlet</servlet-name>
-		<url-pattern>/gwtrpc/*</url-pattern>
-	</servlet-mapping>
-  
+    <servlet-mapping>
+        <servlet-name>GwtRpcPluginProxyServlet</servlet-name>
+        <url-pattern>/gwtrpc/*</url-pattern>
+    </servlet-mapping>
+    
 	<servlet-mapping>
 		<servlet-name>PluggableUploadFileServlet</servlet-name>
 		<url-pattern>/upload/*</url-pattern>
+	</servlet-mapping>
+
+
+	<servlet-mapping>
+		<servlet-name>RequireJSServlet</servlet-name>
+		<url-pattern>/js/require-cfg.js</url-pattern>
 	</servlet-mapping>
 
   <servlet-mapping>
@@ -650,7 +714,7 @@
 		<servlet-name>Publish</servlet-name>
 		<url-pattern>/PublishService</url-pattern>
 	</servlet-mapping>
-	
+
 	<servlet-mapping>
 		<servlet-name>SchedulerAdmin</servlet-name>
 		<url-pattern>/SchedulerAdmin</url-pattern>
@@ -762,15 +826,15 @@
 		<servlet-name>UserContent</servlet-name>
 		<url-pattern>/UserContent</url-pattern>
 	</servlet-mapping>
-
-  	<!--   Temporary fix for GWT localization BISERVER-3640 -->
+  
+    <!--   Temporary fix for GWT localization BISERVER-3640 -->
     <servlet-mapping>
       <servlet-name>BrowserLocale</servlet-name>
       <url-pattern>/js/browserLocale.js</url-pattern>
     </servlet-mapping>
-  	<!--   End BISERVER-3640 -->
-    
-<!-- =============================== merged servlet-mappings ============================= -->
+    <!--   End BISERVER-3640 -->
+
+	<!-- =============================== merged servlet-mappings ============================= -->
 	<servlet-mapping>
 		<servlet-name>RepositoryTree</servlet-name>
 		<url-pattern>/RepositoryTree</url-pattern>
@@ -784,6 +848,11 @@
 	<servlet-mapping>
 		<servlet-name>PropertiesEditor</servlet-name>
 		<url-pattern>/PropertiesEditor</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>DialPct</servlet-name>
+		<url-pattern>/DialPct</url-pattern>
 	</servlet-mapping>
 
 	<servlet-mapping>
@@ -815,11 +884,11 @@
 		<servlet-name>ResetRepository</servlet-name>
 		<url-pattern>/ResetRepositoryService</url-pattern>
 	</servlet-mapping>
-
-	<servlet-mapping>
-		<servlet-name>CacheExpirationService</servlet-name>
-		<url-pattern>/CacheExpirationService</url-pattern>
-	</servlet-mapping>
+	
+  <servlet-mapping>
+    <servlet-name>CacheExpirationService</servlet-name>
+    <url-pattern>/CacheExpirationService</url-pattern>
+  </servlet-mapping>
 
 	<servlet-mapping>
 		<servlet-name>AdhocWebService</servlet-name>
@@ -841,6 +910,36 @@
 		<url-pattern>/SolutionRepositoryService</url-pattern>
 	</servlet-mapping>
 
+    <servlet-mapping>
+        <servlet-name>AuditReport</servlet-name>
+        <url-pattern>/AuditReport</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>AuditReportList</servlet-name>
+        <url-pattern>/AuditReportList</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>VersionControl</servlet-name>
+        <url-pattern>/VersionControl</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>UserService</servlet-name>
+        <url-pattern>/public/UserService</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>Diagnostics</servlet-name>
+        <url-pattern>/admin/Diagnostics</url-pattern>
+    </servlet-mapping>
+        
+   	<servlet-mapping>
+		<servlet-name>ThemeServlet</servlet-name>
+		<url-pattern>/js/themes.js</url-pattern>
+	</servlet-mapping>
+    
     <!-- [BEGIN SAMPLE SERVLET MAPPINGS] -->
 	<servlet-mapping>
 		<servlet-name>UpdateSampleEmails</servlet-name>
@@ -878,14 +977,14 @@
 	</servlet-mapping>	
 
 	<servlet-mapping>
-		<servlet-name>ThemeServlet</servlet-name>
-		<url-pattern>/js/themes.js</url-pattern>
-	</servlet-mapping>
+		<servlet-name>SampleFlashDashboard</servlet-name>
+		<url-pattern>/SampleFlashDashboard</url-pattern>
+	</servlet-mapping>	
     <!-- [END SAMPLE SERVLET MAPPINGS] -->
-
+    
 	<!-- insert additional servlet mappings -->
 	<session-config>
-		<session-timeout>30</session-timeout>
+		<session-timeout>120</session-timeout>
 	</session-config>
 
   <mime-mapping>

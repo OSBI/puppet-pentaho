@@ -76,16 +76,26 @@ class pentaho::postgresql {
                         createrole => false,
                         require => Class["cloudbi::postgresql::configure"],
         }
+               postgresql::user {
+                "quartz_user" :
+                        ensure => present,
+                        password => "password",
+                        superuser => false,
+                        createdb => false,
+                        createrole => false,
+                        require => Class["cloudbi::postgresql::configure"],
+        }
+
 
 	postgresql::database {
 		"quartz" :
 			ensure => present,
-			owner => pentaho_user,
+			owner => quartz_user,
 			encoding => "UTF8",
 			template => "template1",
 			source => "/srv/pentahodata/create_quartz_postgresql.sql.gz",
 			overwrite => false,
-			require => [Postgresql::User["pentaho_user"],Exec["Create postgres user pentaho_user"],Class["cloudbi::postgresql::configure"],Common::Downloadfile["create_quartz_postgresql.sql.gz"]]
+			require => [Postgresql::User["quartz_user"],Exec["Create postgres user quartz_user"],Class["cloudbi::postgresql::configure"],Common::Downloadfile["create_quartz_postgresql.sql.gz"]]
 	}
 	common::downloadfile {                                                                                                                     
     "create_sample_datasource_postgresql.sql.gz":                                                                                                                                

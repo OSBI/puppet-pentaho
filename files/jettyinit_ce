@@ -1,0 +1,145 @@
+#!/bin/sh
+# chkconfig: 2345 20 80
+# description: Handle jetty instance pentaho_biserver
+
+# file managed by puppet
+
+. /lib/lsb/init-functions
+
+SHUTDOWN_WAIT=30
+
+export JAVA_HOME=/usr
+export CATALINA_HOME=/opt/apache-tomcat
+export CATALINA_BASE=/opt/administration-console
+export CATALINA_PID=/opt/administration-console/tomcat.pid
+
+# For SELinux we need to use 'runuser' not 'su'
+if [ -x "/sbin/runuser" ]; then
+    SU="/sbin/runuser -s /bin/sh"
+else
+    SU="su -s /bin/sh"
+fi
+
+start() {
+  isrunning
+
+  if [ "$?" = 0 ]; then
+    echo "jetty-pentaho_biserver already running"
+    return 0
+  fi
+
+  # Change directory to prevent path problems
+  cd /opt/administration-console
+
+  # Remove pidfile if still around
+  test -f $CATALINA_PID && rm -f $CATALINA_PID
+  
+    $SU tomcat -c "umask 0002; /opt/administration-console/start-pac.sh &" > /dev/null
+}
+
+stop() {
+  isrunning
+
+  if [ "$?" = 1 ]; then
+    echo "jetty-pentaho_biserver already stopped"
+    rm -f $CATALINA_PID # remove pidfile if still around
+    return 0
+  fi
+
+  echo -n "Waiting for tomcat-pentaho_biserver to exit (${SHUTDOWN_WAIT} sec.): "
+
+  count=0
+  until [ "$pid" = "" ] || [ $count -gt $SHUTDOWN_WAIT ]; do
+    $SU tomcat -c "/opt/administration-console/stop-pac.sh" > /dev/null
+    findpid
+
+    echo -n "."
+    sleep 10
+    count=$((count+10))
+  done
+
+  echo ""
+
+  if [ "$count" -gt "$SHUTDOWN_WAIT" ]; then
+    echo "Forcing tomcat-pentaho_biserver to stop"
+    /bin/kill -9 $pid && sleep 5
+  fi
+
+  # check if tomcat is still around, this will be our exit status
+  ! isrunning
+}
+
+findpid() {
+  pid=""
+  pid=$(pgrep -U tomcat -f "org.pentaho.pac.server.JettyServer")
+  # validate output of pgrep
+  if ! [ "$pid" = "" ] && ! [ "$pid" -gt 0 ]; then
+    log_failure_msg "Unable to determine if jetty-pentaho_biserver is running"
+    exit 1
+  fi
+}
+
+isrunning() {
+  findpid
+
+  if [ "$pid" = "" ]; then
+    return 1
+  elif [ "$pid" -gt 0 ]; then
+    return 0
+  fi
+}
+
+case "$1" in
+  start)
+    start
+    RETVAL=$?
+
+    if [ "$RETVAL" = 0 ]; then
+      log_success_msg "Started jetty-pentaho_biserver"
+    else
+      log_failure_msg "Not able to start jetty-pentaho_biserver"
+    fi
+    ;;
+      stop)
+    stop
+    RETVAL=$?
+
+    if [ "$RETVAL" = 0 ]; then
+      log_success_msg "Stopped jetty-pentaho_biserver"
+    else
+      log_failure_msg "Not able to stop jetty-pentaho_biserver"
+    fi
+  ;;
+
+  restart)
+    stop
+    sleep 5
+    start
+    RETVAL=$?
+
+    if [ "$RETVAL" = 0 ]; then
+      log_success_msg "Restarted jetty-pentaho_biserver"
+    else
+      log_failure_msg "Not able to restart jetty-pentaho_biserver"
+    fi
+  ;;
+
+  status)
+    isrunning
+    RETVAL=$?
+
+    if [ "$RETVAL" = 0 ]; then
+      echo "jetty-pentaho_biserver (pid $pid) is running..."
+    else
+      echo "jetty-pentaho_biserver is stopped"
+      RETVAL=3
+    fi
+  ;;
+  
+    *)
+    echo "Usage: $0 {start|stop|restart|status}."
+  ;;
+
+esac
+
+exit $RETVAL
