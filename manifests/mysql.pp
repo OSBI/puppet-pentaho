@@ -9,6 +9,7 @@ class pentaho::mysql {
          mysql::db { 'hibernate':
                 user => 'hibuser',
                 password => 'password',
+		charset => 'latin1',
                 host => 'localhost',
 		sql => '/srv/pentahodata/create_repository_mysql.sql'
         }

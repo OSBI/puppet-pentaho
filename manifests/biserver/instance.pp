@@ -36,8 +36,7 @@ define pentaho::biserver::instance ($ensure,
 				ajp_port => "${tomcat_ajp}",
 				server_port => "${tomcat_server}",
 				http_port => "${tomcat_http}",
-				group => "pentaho",
-				require => Group["pentaho"],
+				group => "adm",
 		} 
 		class {
 			"pentaho::server" :
@@ -56,8 +55,6 @@ define pentaho::biserver::instance ($ensure,
 				ajp_port => "${tomcat_ajp}",
 				server_port => "${tomcat_server}",
 				http_port => "${tomcat_http}",
-				group => "pentaho",
-				require => Group["pentaho"],
 		} 
 		class {
 			"pentaho::server" :
@@ -76,8 +73,6 @@ define pentaho::biserver::instance ($ensure,
 				ajp_port => "${tomcat_ajp}",
 				server_port => "${tomcat_server}",
 				http_port => "${tomcat_http}",
-				group => "pentaho",
-				require => Group["pentaho"],
 		} 
 		class {
 			"pentaho::server" :
